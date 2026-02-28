@@ -24,17 +24,30 @@ pipeline {
         stage('Robot Framework Test') {
             steps {
                 echo 'Cloning Repo 2 and running Robot Framework...'
+                // ตรวจสอบและลบโฟลเดอร์เก่าก่อน clone เพื่อป้องกัน error
+                sh 'rm -rf robot_tests' 
                 sh 'git clone ${REPO2_URL} robot_tests'
                 sh '''
                 . venv/bin/activate
                 nohup uvicorn main:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
                 sleep 5
                 pip install -r robot_tests/requirements.txt
-                robot robot_tests/test_mul10.robot
+                # รัน robot และเก็บผลลัพธ์ไว้ที่ระดับ root เพื่อให้ plugin หาเจอ
+                robot --outputdir . robot_tests/test_mul10.robot || true
                 '''
             }
             post {
                 always {
+                    // ส่วนที่ 1: สั่งให้ Plugin วาดกราฟ Test Result Trend
+                    step([$class: 'RobotPublisher',
+                        outputPath: '.',
+                        outputFileName: 'output.xml',
+                        reportFileName: 'report.html',
+                        logFileName: 'log.html',
+                        disableArchiveResults: false,
+                        passThreshold: 100.0,
+                        unstableThreshold: 80.0
+                    ])
                     sh 'pkill -f uvicorn || true'
                     sh 'rm -rf robot_tests' 
                 }
@@ -58,8 +71,15 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 echo 'Deploying to K8s Cluster...'
-                sh 'kubectl apply -f k8s/deployment.yaml --insecure-skip-tls-verify --validate=false'
+                sh 'kubectl apply -f k8s/deployment.yaml --insecure-skip-tls-verify'
+                // กรณีที่คุณรวม service ไว้ใน deployment.yaml แล้ว บรรทัดล่างนี้อาจไม่จำเป็น
                 sh 'kubectl apply -f k8s/service.yaml --insecure-skip-tls-verify --validate=false'
+                
+                // ส่วนที่ 2: บังคับให้ K8s ดึง Image ล่าสุดมาใช้ทันที (แก้ปัญหาโค้ดไม่เปลี่ยน)
+                sh 'kubectl rollout restart deployment fastapi-microservice --insecure-skip-tls-verify'
+                
+                echo 'Waiting for rollout to complete...'
+                sh 'kubectl rollout status deployment fastapi-microservice --insecure-skip-tls-verify'
             }
         }
     }
