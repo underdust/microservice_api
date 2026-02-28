@@ -9,13 +9,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                echo 'Checking out source code...'
-                checkout scm
-            }
-        }
-
         stage('Unit Test (mul10 only)') {
             steps {
                 echo 'Running Unit Tests for mul10...'
