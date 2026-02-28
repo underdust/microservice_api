@@ -6,6 +6,7 @@ pipeline {
         DOCKER_IMAGE     = 'underdust/microservice-api'
         TAG              = 'latest'
         REPO2_URL        = 'https://github.com/underdust/microservice_robot_test.git'
+        KUBECONFIG       = '/var/jenkins_home/.kube/config'
     }
 
     stages {
