@@ -6,7 +6,6 @@ pipeline {
         DOCKER_IMAGE = 'underdust/microservice-api' 
         TAG = 'latest'
         REPO2_URL = 'https://github.com/underdust/microservice_robot_test.git'
-        KUBECONFIG_CREDS_ID = 'kubeconfig'
     }
 
     stages {
@@ -59,7 +58,8 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 echo 'Deploying to K8s Cluster...'
-                sh 'kubectl apply -f k8s/deployment.yaml --server=https://host.docker.internal:8443 --insecure-skip-tls-verify --validate=false'
+                sh 'kubectl apply -f k8s/deployment.yaml --insecure-skip-tls-verify --validate=false'
+                sh 'kubectl apply -f k8s/service.yaml --insecure-skip-tls-verify --validate=false'
             }
         }
     }
