@@ -24,7 +24,6 @@ pipeline {
         stage('Robot Framework Test') {
             steps {
                 echo 'Cloning Repo 2 and running Robot Framework...'
-                // ตรวจสอบและลบโฟลเดอร์เก่าก่อน clone เพื่อป้องกัน error
                 sh 'rm -rf robot_tests' 
                 sh 'git clone ${REPO2_URL} robot_tests'
                 sh '''
@@ -72,10 +71,7 @@ pipeline {
             steps {
                 echo 'Deploying to K8s Cluster...'
                 sh 'kubectl apply -f k8s/deployment.yaml --insecure-skip-tls-verify'
-                // กรณีที่คุณรวม service ไว้ใน deployment.yaml แล้ว บรรทัดล่างนี้อาจไม่จำเป็น
                 sh 'kubectl apply -f k8s/service.yaml --insecure-skip-tls-verify --validate=false'
-                
-                // ส่วนที่ 2: บังคับให้ K8s ดึง Image ล่าสุดมาใช้ทันที (แก้ปัญหาโค้ดไม่เปลี่ยน)
                 sh 'kubectl rollout restart deployment fastapi-microservice --insecure-skip-tls-verify'
                 
                 echo 'Waiting for rollout to complete...'
