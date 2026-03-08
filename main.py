@@ -8,4 +8,4 @@ def multiply_by_10(num: int):
 
 @app.get("/getcode")
 def get_code():
-    return {"code": "Hello, Test"}
+    return {"code": "Hello, Mr.Ratthachai"}
