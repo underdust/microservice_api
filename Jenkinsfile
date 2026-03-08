@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_CREDS_ID = 'dockerhub-credentials' 
+        DOCKER_CREDS_ID = 'github-credentials' 
         DOCKER_IMAGE = 'ghcr.io/underdust/microservice-api' 
         TAG = 'latest'
         REPO2_URL = 'https://github.com/underdust/microservice_robot_test.git'
