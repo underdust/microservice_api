@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         DOCKER_CREDS_ID = 'dockerhub-credentials' 
-        DOCKER_IMAGE = 'underdust/microservice-api' 
+        DOCKER_IMAGE = 'ghcr.io/underdust/microservice-api' 
         TAG = 'latest'
         REPO2_URL = 'https://github.com/underdust/microservice_robot_test.git'
     }
@@ -28,7 +28,7 @@ pipeline {
                     sh "docker build -t ${DOCKER_IMAGE}:${TAG} ."
                     
                     withCredentials([usernamePassword(credentialsId: env.DOCKER_CREDS_ID, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
-                        sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                        sh "echo \$DOCKER_PASS | docker login ghcr.io -u \$DOCKER_USER --password-stdin"
                         sh "docker push ${DOCKER_IMAGE}:${TAG}"
                     }
                 }
@@ -57,7 +57,6 @@ pipeline {
                 nohup uvicorn main:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
                 sleep 5
                 pip install -r robot_tests/requirements.txt
-                # รัน robot และเก็บผลลัพธ์ไว้ที่ระดับ root เพื่อให้ plugin หาเจอ
                 robot --outputdir . robot_tests/test_mul10.robot || true
                 '''
             }
