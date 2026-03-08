@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: fastapi-container
-        image: underdust/microservice-api:latest 
+        image: ghcr.io/underdust/microservice-api:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
