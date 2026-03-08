@@ -21,38 +21,6 @@ pipeline {
             }
         }
 
-        stage('Robot Framework Test') {
-            steps {
-                echo 'Cloning Repo 2 and running Robot Framework...'
-                sh 'rm -rf robot_tests' 
-                sh 'git clone ${REPO2_URL} robot_tests'
-                sh '''
-                . venv/bin/activate
-                nohup uvicorn main:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
-                sleep 5
-                pip install -r robot_tests/requirements.txt
-                # รัน robot และเก็บผลลัพธ์ไว้ที่ระดับ root เพื่อให้ plugin หาเจอ
-                robot --outputdir . robot_tests/test_mul10.robot || true
-                '''
-            }
-            post {
-                always {
-                    // ส่วนที่ 1: สั่งให้ Plugin วาดกราฟ Test Result Trend
-                    step([$class: 'RobotPublisher',
-                        outputPath: '.',
-                        outputFileName: 'output.xml',
-                        reportFileName: 'report.html',
-                        logFileName: 'log.html',
-                        disableArchiveResults: false,
-                        passThreshold: 100.0,
-                        unstableThreshold: 80.0
-                    ])
-                    sh 'pkill -f uvicorn || true'
-                    sh 'rm -rf robot_tests' 
-                }
-            }
-        }
-
         stage('Build & Push Docker Image') {
             steps {
                 echo 'Building and pushing Docker image to Registry...'
@@ -76,6 +44,37 @@ pipeline {
                 
                 echo 'Waiting for rollout to complete...'
                 sh 'kubectl rollout status deployment fastapi-microservice --insecure-skip-tls-verify'
+            }
+        }
+
+        stage('Robot Framework Test') {
+            steps {
+                echo 'Cloning Repo 2 and running Robot Framework...'
+                sh 'rm -rf robot_tests' 
+                sh 'git clone ${REPO2_URL} robot_tests'
+                sh '''
+                . venv/bin/activate
+                nohup uvicorn main:app --host 0.0.0.0 --port 8000 > api.log 2>&1 &
+                sleep 5
+                pip install -r robot_tests/requirements.txt
+                # รัน robot และเก็บผลลัพธ์ไว้ที่ระดับ root เพื่อให้ plugin หาเจอ
+                robot --outputdir . robot_tests/test_mul10.robot || true
+                '''
+            }
+            post {
+                always {
+                    step([$class: 'RobotPublisher',
+                        outputPath: '.',
+                        outputFileName: 'output.xml',
+                        reportFileName: 'report.html',
+                        logFileName: 'log.html',
+                        disableArchiveResults: false,
+                        passThreshold: 100.0,
+                        unstableThreshold: 80.0
+                    ])
+                    sh 'pkill -f uvicorn || true'
+                    sh 'rm -rf robot_tests' 
+                }
             }
         }
     }
